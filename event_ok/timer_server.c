@@ -10,7 +10,7 @@
 #include <unistd.h>
  #include <stdlib.h>
 
-void connection_time(int fd, short event, void *arg1)
+void on_read(int fd, short event, void *arg1)
 {
 	char buf[32];
 	struct tm t;
@@ -21,6 +21,32 @@ void connection_time(int fd, short event, void *arg1)
 	localtime_r(&now, &t);
 	asctime_r(&t, buf);
 
+	read(fd,buf,strlen(buf));
+
+printf("on read:%s\n",buf);
+	//write(fd, buf, strlen(buf));
+	//shutdown(fd, SHUT_RDWR);
+
+	//free(arg);
+}
+
+void on_write(int fd, short event, void *arg1)
+{
+	char buf[32];
+	struct tm t;
+	time_t now;
+	struct event *arg = (struct event *)arg1;
+
+	time(&now);
+	localtime_r(&now, &t);
+	asctime_r(&t, buf);
+
+//	memset(buf,0,strlen(buf));
+	read(fd,buf,strlen(buf));
+
+printf("on read:%s\n",buf);
+//	memset(buf,0,strlen(buf));
+
 	write(fd, buf, strlen(buf));
 	shutdown(fd, SHUT_RDWR);
 
@@ -29,9 +55,9 @@ void connection_time(int fd, short event, void *arg1)
 
 void connection_accept(int fd, short event, void *arg)
 {
-	printf("%s\n", "ha");
+	//printf("%s\n", "ha");
 	/* for debugging */
-	fprintf(stderr, "%s(): fd = %d, event = %d./n", __func__, fd, event);
+	fprintf(stderr, "%s(): fd = %d, event = %d.\n", __func__, fd, event);
 
 	/* Accept a new connection. */
 	struct sockaddr_in s_in;
@@ -43,9 +69,9 @@ void connection_accept(int fd, short event, void *arg)
 	}
 
 	/* Install time server. */
+	//struct event *ev = (struct event *)arg;
 	struct event *ev = (struct event *)malloc(sizeof(struct event));
-	//event_set(&evfifo, fd, EV_WRITE , fifo_read, &evfifo);
-	event_set(ev, ns, EV_WRITE, connection_time, ev);
+	event_set(ev, ns, EV_WRITE, on_write, ev);
 	event_add(ev, NULL);
 }
 
@@ -57,6 +83,8 @@ int main(void)
 		perror("socket");
 		exit(1);
 	}
+	int opt = 1;
+	setsockopt(s,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
 
 	/* bind() */
 	struct sockaddr_in s_in;
@@ -70,7 +98,7 @@ int main(void)
 	}
 
 	/* listen() */
-	if (listen(s, 5) < 0) {
+	if (listen(s, 50) < 0) {
 		perror("listen");
 		exit(1);
 	}
@@ -80,6 +108,7 @@ int main(void)
 
 	/* Create event. */
 	struct event ev;
+	//event_set(&ev, s, EV_READ | EV_PERSIST, on_read, &ev);
 	event_set(&ev, s, EV_WRITE | EV_PERSIST, connection_accept, &ev);
 
 	/* Add event. */
