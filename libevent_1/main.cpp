@@ -39,7 +39,7 @@ main(int argc, char **argv)
 
 	struct sockaddr_in sin;
 
-	base = event_base_new();
+	base = event_init();
 	if (!base) {
 		fprintf(stderr, "Could not initialize libevent!\n");
 		return 1;
