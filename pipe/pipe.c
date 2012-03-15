@@ -6,7 +6,7 @@
  
 void sig_pipe(int signo)
 {
-     write(STDOUT_FILENO, "receive SIGPIPE/n", 17);
+     write(STDOUT_FILENO, "receive SIGPIPE\n", 17);
 }
  
 int main()
