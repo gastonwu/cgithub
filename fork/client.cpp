@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
 
     string line;
     sqlparam.SerializeToString(&line);
+    line = "from client";
 
     //准备发送	
     char * msg;
@@ -86,12 +87,16 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Read Error:%s\n", strerror(errno));
         exit(1);
     }
+    buffer[nbytes] = '\0';
+    cout << "\n-" << buffer << "-\n" << endl;
+    //printf("recv:%s\n",buffer);
     //buffer[nbytes] = '\0';
     //protobuf start
-    dbproxy::dbresult dbresult;
-    string line2(buffer);
-    dbresult.ParseFromString(line2);
-    cout << "\n-" << dbresult.DebugString() << "-\n" << endl;
+
+    // dbproxy::dbresult dbresult;
+    // string line2(buffer);
+    // dbresult.ParseFromString(line2);
+    // cout << "\n-" << dbresult.DebugString() << "-\n" << endl;
 
     //printf("I have received:%s\n", buffer);
     /*结束通讯*/

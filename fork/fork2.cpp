@@ -11,25 +11,52 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-void on_read(int fd, short event, void *arg1)
-{
-	char buf[32];
-	struct tm t;
-	time_t now;
-	struct event *arg = (struct event *)arg1;
+#define ForkNum 1
+#define SERVER_PORT 7000
+#define FifoServer "/tmp/fifo.server"
+#define FifoClient "/tmp/fifo.client."
 
-	time(&now);
-	localtime_r(&now, &t);
-	asctime_r(&t, buf);
+// void on_read(int fd, short event, void *arg1)
+// {
+// 	char buf[32];
+// 	struct tm t;
+// 	time_t now;
+// 	struct event *arg = (struct event *)arg1;
 
-	read(fd,buf,strlen(buf));
+// 	time(&now);
+// 	localtime_r(&now, &t);
+// 	asctime_r(&t, buf);
 
-printf("on read:%s\n",buf);
-	//write(fd, buf, strlen(buf));
-	//shutdown(fd, SHUT_RDWR);
+// 	read(fd,buf,strlen(buf));
 
-	//free(arg);
+// printf("on read:%s\n",buf);
+// 	//write(fd, buf, strlen(buf));
+// 	//shutdown(fd, SHUT_RDWR);
+
+// 	//free(arg);
+// }
+
+void server_write2fifo(int fd){
+	int len = 100;
+	int nwrite = 0;
+	char sfd[len];
+	sprintf( sfd, "%d", fd);
+
+	//write 2 
+	int fifo_fd=open(FifoServer,O_WRONLY|O_NONBLOCK,0);
+	if((nwrite=write(fd,sfd,len))==-1)
+	{
+		if(errno==EAGAIN)
+			printf("The FIFO has not been read yet.Please try later\n");
+	}
+	else{
+		printf("[write][%d] %s\n",fd,FifoServer);
+	}
+
 }
 
 void on_write(int fd, short event, void *arg1)
@@ -45,7 +72,7 @@ void on_write(int fd, short event, void *arg1)
 
 //	memset(buf,0,strlen(buf));
 	read(fd,buf,strlen(buf));
-
+	server_write2fifo(fd);
 printf("on read:%s\n",buf);
 //	memset(buf,0,strlen(buf));
 
@@ -77,6 +104,8 @@ void connection_accept(int fd, short event, void *arg)
 	event_add(ev, NULL);
 }
 
+
+
 int net_process(void)
 {
 	int pid = fork();
@@ -97,7 +126,7 @@ int net_process(void)
 	struct sockaddr_in s_in;
 	bzero(&s_in, sizeof(s_in));
 	s_in.sin_family = AF_INET;
-	s_in.sin_port = htons(7000);
+	s_in.sin_port = htons(SERVER_PORT);
 	s_in.sin_addr.s_addr = INADDR_ANY;
 	if (bind(s, (struct sockaddr *) &s_in, sizeof(s_in)) < 0) {
 		perror("bind");
@@ -128,6 +157,8 @@ int net_process(void)
 
 int child_process() {
 	int pid = getpid();
+	int filePos = pid % ForkNum;
+
     while (1) {
     	sleep(1);
     	printf("%s-%d\n", "child",pid);
@@ -158,7 +189,7 @@ int fork_process(int num){
 int main(){
 	signal(SIGCLD, SIG_IGN);
 
-    fork_process(10);
+    fork_process(ForkNum);
 	net_process();
 
 	return 1;

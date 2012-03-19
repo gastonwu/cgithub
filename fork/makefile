@@ -36,5 +36,7 @@ mysqltest: libsqlparam libresult
 mysqlbind: 
 	g++ mysqlbind.cpp -o mysqlbind $(COMMON_PATH)
 	./mysqlbind
+test:
+	g++ test.c -o test
 run:
 	echo 'ha'
