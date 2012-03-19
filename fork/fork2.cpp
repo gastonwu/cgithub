@@ -47,14 +47,23 @@ void server_write2fifo(int fd){
 	sprintf( sfd, "%d", fd);
 
 	//write 2 
+    if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
+       //printf("cannot create fifoserver\n");
+    }
 	int fifo_fd=open(FifoServer,O_WRONLY|O_NONBLOCK,0);
-	if((nwrite=write(fd,sfd,len))==-1)
-	{
-		if(errno==EAGAIN)
-			printf("The FIFO has not been read yet.Please try later\n");
-	}
-	else{
-		printf("[write][%d] %s\n",fd,FifoServer);
+	while(1){
+		if((nwrite=write(fifo_fd,sfd,len))==-1)
+		{
+			if(errno==EAGAIN){
+				printf("The FIFO has not been read yet.Please try later\n");
+			}
+			printf("[write.fail][%d] %d\n",fifo_fd,errno);
+			//break;
+		}
+		else{
+			printf("[write.ok][%d] %s\n",fifo_fd,FifoServer);
+			break;
+		}
 	}
 
 }
