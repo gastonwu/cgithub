@@ -12,9 +12,9 @@ server: libsqlparam libsqlparam
 	g++ -g server.cpp -o server $(COMMON_PATH)
 epollfork:
 	g++ -g epollfork.cpp -o epollfork $(COMMON_PATH)	
-fork: libsqlparam libsqlparam
+fork: libsqlparam libresult
 	g++ -g fork.cpp -o fork $(COMMON_PATH)	
-fork2: libsqlparam libsqlparam
+fork2: libsqlparam libresult
 	g++ -g fork2.cpp -o fork2 $(COMMON_PATH) -levent
 client: libsqlparam libresult
 	g++ -g client.cpp -o client $(COMMON_PATH)

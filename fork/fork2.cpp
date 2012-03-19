@@ -130,7 +130,7 @@ int child_process() {
 	int pid = getpid();
     while (1) {
     	sleep(1);
-    	printf("%s-%d\n", "child_process_loop",pid);
+    	printf("%s-%d\n", "child",pid);
     }
     printf("%s-%d\n", "child_process",pid);
 }
