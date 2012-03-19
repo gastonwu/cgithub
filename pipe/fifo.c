@@ -8,11 +8,19 @@
 #include <signal.h>
 #include <event.h>
 #include <errno.h>
+#include <pthread.h>
 
+/* Lock for global stats */
+static pthread_mutex_t stats_lock;
+
+static int connectionNum = 0;
 /*
  * Compile with:
  * cc -I/usr/local/include -o event-test event-test.c -L/usr/local/lib -levent
  */
+static void
+fifo_read(int fd, short event, void *arg);
+
 
 static void
 fifo_read(int fd, short event, void *arg)
@@ -36,12 +44,13 @@ fifo_read(int fd, short event, void *arg)
 		return;
 	}
 
-	buf[len] = '\n';
-	fprintf(stdout, "Read: %sn", buf);
+	buf[len] = '\0';
+	//memset(buf,'\0',strlen(buf));
+	fprintf(stdout, "Read: %s\n", buf);
 }
 
 int
-main (int argc, char **argv)
+test ()
 {
 	struct event evfifo;
 	struct stat st;
@@ -82,4 +91,25 @@ main (int argc, char **argv)
 
 	event_dispatch();
 	return (0);
+}
+
+
+void STATS_INIT() {
+	pthread_mutex_init(&stats_lock, NULL);
+}
+void STATS_LOCK() {
+    pthread_mutex_lock(&stats_lock);
+}
+
+void STATS_UNLOCK() {
+    pthread_mutex_unlock(&stats_lock);
+}
+
+void test2(){
+
+}
+
+int main(){
+	STATS_INIT();
+	test();
 }
