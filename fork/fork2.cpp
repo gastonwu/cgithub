@@ -39,33 +39,97 @@
 
 // 	//free(arg);
 // }
-
-void server_write2fifo(int fd){
+void client_writefifo(int fd){
 	int len = 100;
 	int nwrite = 0;
 	char sfd[len];
+	char ClientFifoPath[100];
 	sprintf( sfd, "%d", fd);
+	sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
+	printf("%s\n", ClientFifoPath);
+
+	int fifo_fd=open(ClientFifoPath,O_WRONLY,0);
+	if((nwrite=write(fifo_fd,sfd,len))==-1)
+	{
+		if(errno==EAGAIN){
+			printf("The FIFO has not been read yet.Please try later\n");
+		}else{
+			printf("fifo.error:%d\n",errno);
+		}
+	}
+	else{
+		printf("client.fifo.write:%s\n",sfd);
+	}
+
+}
+
+void client_readfifo(){
+	int len = 100;
+	int nread = 0;
+	char sfd[len];
+	char ClientFifoPath[100];
+	char buf_r[len];
+	//sprintf( sfd, "%d", fd);
+	//sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
+	int fifo_fd=open(FifoServer,O_RDONLY,0);
+	if((nread=read(fifo_fd,buf_r,len))==-1){
+            if(errno==EAGAIN){
+                //printf("no data yet\n");
+            }
+	}else{
+		printf("server.fifo.read:%s\n",buf_r);
+		int client_fd = atoi(buf_r);
+		//client_fd = client_fd * 10;
+		client_writefifo(client_fd);
+	}
+}
+
+void server_readfifo(int fd){
+	int len = 100;
+	int nread = 0;
+	char sfd[len];
+	char ClientFifoPath[100];
+	char buf_r[len];
+	//sprintf( sfd, "%d", fd);
+	sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
+	int fifo_fd=open(ClientFifoPath,O_RDONLY,0);
+	if((nread=read(fifo_fd,buf_r,len))==-1){
+            if(errno==EAGAIN){
+                //printf("no data yet\n");
+            }
+	}else{
+		printf("client.fifo.read:%s\n",buf_r);
+	}
+}
+
+void server_writefifo(int fd){
+	int len = 100;
+	int nwrite = 0;
+	char sfd[len];
+	char ClientFifoPath[100];
+	sprintf( sfd, "%d", fd);
+	sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
+	printf("%s\n", ClientFifoPath);
 
 	//write 2 
     if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
        //printf("cannot create fifoserver\n");
     }
-	int fifo_fd=open(FifoServer,O_WRONLY|O_NONBLOCK,0);
-	while(1){
-		if((nwrite=write(fifo_fd,sfd,len))==-1)
-		{
-			if(errno==EAGAIN){
-				printf("The FIFO has not been read yet.Please try later\n");
-			}
-			printf("[write.fail][%d] %d\n",fifo_fd,errno);
-			//break;
-		}
-		else{
-			printf("[write.ok][%d] %s\n",fifo_fd,FifoServer);
-			break;
+    if(mkfifo(ClientFifoPath,O_CREAT|O_EXCL)){
+       //printf("cannot create fifoserver\n");
+    }
+
+	int fifo_fd=open(FifoServer,O_WRONLY,0);
+	if((nwrite=write(fifo_fd,sfd,len))==-1)
+	{
+		if(errno==EAGAIN){
+			printf("The FIFO has not been read yet.Please try later\n");
 		}
 	}
-
+	else{
+		printf("server.fifo.write:%s\n",sfd);
+	}
+	server_readfifo(fd);
 }
 
 void on_write(int fd, short event, void *arg1)
@@ -81,8 +145,8 @@ void on_write(int fd, short event, void *arg1)
 
 //	memset(buf,0,strlen(buf));
 	read(fd,buf,strlen(buf));
-	server_write2fifo(fd);
-printf("on read:%s\n",buf);
+	server_writefifo(fd);
+//printf("on read:%s\n",buf);
 //	memset(buf,0,strlen(buf));
 
 	write(fd, buf, strlen(buf));
@@ -169,8 +233,9 @@ int child_process() {
 	int filePos = pid % ForkNum;
 
     while (1) {
+    	client_readfifo();
     	sleep(1);
-    	printf("%s-%d\n", "child",pid);
+    	//printf("%s-%d\n", "child",pid);
     }
     printf("%s-%d\n", "child_process",pid);
 }
