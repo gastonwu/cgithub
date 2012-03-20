@@ -19,6 +19,7 @@
 #define SERVER_PORT 7000
 #define FifoServer "/tmp/fifo.server"
 #define FifoClient "/tmp/fifo.client."
+#define FifoNum 1000
 
 // void on_read(int fd, short event, void *arg1)
 // {
@@ -39,6 +40,22 @@
 
 // 	//free(arg);
 // }
+
+void init_fifo(){
+	char ClientFifoPath[100];
+    if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
+       //printf("cannot create fifoserver\n");
+    }
+
+	for(int i=0;i<FifoNum;i++){
+		sprintf( ClientFifoPath, "%s%d", FifoClient,i);
+
+		//write 2 
+	    if(mkfifo(ClientFifoPath,O_CREAT|O_EXCL)){
+	       //printf("cannot create fifoserver\n");
+	    }		
+	}
+}
 void client_writefifo(int fd){
 	int len = 100;
 	int nwrite = 0;
@@ -112,12 +129,12 @@ void server_writefifo(int fd){
 	printf("%s\n", ClientFifoPath);
 
 	//write 2 
-    if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
-       //printf("cannot create fifoserver\n");
-    }
-    if(mkfifo(ClientFifoPath,O_CREAT|O_EXCL)){
-       //printf("cannot create fifoserver\n");
-    }
+    // if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
+    //    //printf("cannot create fifoserver\n");
+    // }
+    // if(mkfifo(ClientFifoPath,O_CREAT|O_EXCL)){
+    //    //printf("cannot create fifoserver\n");
+    // }
 
 	int fifo_fd=open(FifoServer,O_WRONLY,0);
 	if((nwrite=write(fifo_fd,sfd,len))==-1)
@@ -145,12 +162,11 @@ void on_write(int fd, short event, void *arg1)
 
 //	memset(buf,0,strlen(buf));
 	read(fd,buf,strlen(buf));
-	server_writefifo(fd);
-//printf("on read:%s\n",buf);
-//	memset(buf,0,strlen(buf));
+	server_writefifo(fd); //逻辑处理
 
 	write(fd, buf, strlen(buf));
-	shutdown(fd, SHUT_RDWR);
+	close(fd);
+	//shutdown(fd, SHUT_RDWR);
 
 	free(arg);
 }
@@ -166,7 +182,7 @@ void connection_accept(int fd, short event, void *arg)
 	socklen_t len = sizeof(s_in);
 	int ns = accept(fd, (struct sockaddr *) &s_in, &len);
 	if (ns < 0) {
-		perror("accept");
+		perror("accept->");
 		return;
 	}
 
@@ -207,7 +223,7 @@ int net_process(void)
 	}
 
 	/* listen() */
-	if (listen(s, 50) < 0) {
+	if (listen(s, 500) < 0) {
 		perror("listen");
 		exit(1);
 	}
@@ -234,7 +250,7 @@ int child_process() {
 
     while (1) {
     	client_readfifo();
-    	sleep(1);
+    	usleep(10);
     	//printf("%s-%d\n", "child",pid);
     }
     printf("%s-%d\n", "child_process",pid);
@@ -263,6 +279,7 @@ int fork_process(int num){
 int main(){
 	signal(SIGCLD, SIG_IGN);
 
+	init_fifo();
     fork_process(ForkNum);
 	net_process();
 

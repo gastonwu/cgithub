@@ -14,8 +14,8 @@ epollfork:
 	g++ -g epollfork.cpp -o epollfork $(COMMON_PATH)	
 fork: libsqlparam libresult
 	g++ -g fork.cpp -o fork $(COMMON_PATH)	
-fork2: libsqlparam libresult
-	g++ -g fork2.cpp -o fork2 $(COMMON_PATH) -levent
+fork2: 
+	g++ -g fork2.cpp -o fork2 -levent
 client: libsqlparam libresult
 	g++ -g client.cpp -o client $(COMMON_PATH)
 clean:
