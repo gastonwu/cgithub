@@ -1,6 +1,6 @@
 DEF= -DCOMPILE_DATE=\"$(DATE)\" -DCOMPILE_TIME=\"$(TIME)\" -DVERSION=\"$(VER)\"
 
-PROJ_ROOT =/home/dc/homework/dbproxy_benchmark
+PROJ_ROOT =/home/gaston/cpp/fork/benchmark
 INC = -I$(PROJ_ROOT)/
 LIB = -lpthread -ldl -lz -lm 
 

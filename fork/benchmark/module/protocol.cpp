@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "dna_endec.h"
+//#include "dna_endec.h"
 
 #define CHK_RST(x) do{ if (x < 0) return -1; }while(0)
 

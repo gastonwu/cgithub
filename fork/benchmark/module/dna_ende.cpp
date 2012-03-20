@@ -1,6 +1,6 @@
 
 //#include "stdafx.h"
-#include "dna_endec.h"
+//#include "dna_endec.h"
 #include <assert.h>
 
 // --------------- Utils ---------------
