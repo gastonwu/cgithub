@@ -14,12 +14,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "./atomic.h"
 
 #define ForkNum 1
 #define SERVER_PORT 7000
 #define FifoServer "/tmp/fifo.server"
 #define FifoClient "/tmp/fifo.client."
-#define FifoNum 1000
+#define FifoNum 5000
+
+atomic_t ActiveConnectionAtomic;
+static int ActiveConnection = 0;
 
 // void on_read(int fd, short event, void *arg1)
 // {
@@ -166,6 +170,8 @@ void on_write(int fd, short event, void *arg1)
 
 	write(fd, buf, strlen(buf));
 	close(fd);
+	//ActiveConnection--;	
+	atomic_dec(&ActiveConnectionAtomic);
 	//shutdown(fd, SHUT_RDWR);
 
 	free(arg);
@@ -173,9 +179,15 @@ void on_write(int fd, short event, void *arg1)
 
 void connection_accept(int fd, short event, void *arg)
 {
+	//ActiveConnection++;
+	atomic_add(1,&ActiveConnectionAtomic);
 	//printf("%s\n", "ha");
 	/* for debugging */
-	fprintf(stderr, "%s(): fd = %d, event = %d.\n", __func__, fd, event);
+	ActiveConnection=atomic_read(&ActiveConnectionAtomic);
+	if(ActiveConnection > 2000){
+		return;
+	}
+	fprintf(stderr, "%s(): fd = %d, event = %d, conn = %d.\n", __func__, fd, event,ActiveConnection);
 
 	/* Accept a new connection. */
 	struct sockaddr_in s_in;
@@ -185,6 +197,7 @@ void connection_accept(int fd, short event, void *arg)
 		perror("accept->");
 		return;
 	}
+	
 
 	/* Install time server. */
 	//struct event *ev = (struct event *)arg;
@@ -279,6 +292,8 @@ int fork_process(int num){
 int main(){
 	signal(SIGCLD, SIG_IGN);
 
+//printf("%s\n", eventop.);
+	atomic_set(&ActiveConnectionAtomic,0);
 	init_fifo();
     fork_process(ForkNum);
 	net_process();
