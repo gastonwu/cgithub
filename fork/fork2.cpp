@@ -20,7 +20,7 @@
 #define SERVER_PORT 7000
 #define FifoServer "/tmp/fifo.server"
 #define FifoClient "/tmp/fifo.client."
-#define FifoNum 5000
+#define FifoNum 2000
 
 atomic_t ActiveConnectionAtomic;
 static int ActiveConnection = 0;
@@ -45,6 +45,11 @@ static int ActiveConnection = 0;
 // 	//free(arg);
 // }
 
+void fd2fifopath(int fd,char *path){
+	int pos = fd % FifoNum;
+	sprintf( path, "%s%d", FifoClient,pos);
+}
+
 void init_fifo(){
 	char ClientFifoPath[100];
     if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
@@ -52,7 +57,8 @@ void init_fifo(){
     }
 
 	for(int i=0;i<FifoNum;i++){
-		sprintf( ClientFifoPath, "%s%d", FifoClient,i);
+		fd2fifopath(i,ClientFifoPath);
+		//sprintf( ClientFifoPath, "%s%d", FifoClient,i);
 
 		//write 2 
 	    if(mkfifo(ClientFifoPath,O_CREAT|O_EXCL)){
@@ -66,7 +72,7 @@ void client_writefifo(int fd){
 	char sfd[len];
 	char ClientFifoPath[100];
 	sprintf( sfd, "%d", fd);
-	sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
+	fd2fifopath(fd,ClientFifoPath);
 	printf("%s\n", ClientFifoPath);
 
 	int fifo_fd=open(ClientFifoPath,O_WRONLY,0);
@@ -112,7 +118,7 @@ void server_readfifo(int fd){
 	char ClientFifoPath[100];
 	char buf_r[len];
 	//sprintf( sfd, "%d", fd);
-	sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
+	fd2fifopath(fd,ClientFifoPath);
 	int fifo_fd=open(ClientFifoPath,O_RDONLY,0);
 	if((nread=read(fifo_fd,buf_r,len))==-1){
             if(errno==EAGAIN){
@@ -121,6 +127,8 @@ void server_readfifo(int fd){
 	}else{
 		printf("client.fifo.read:%s\n",buf_r);
 	}
+	close(fifo_fd);
+
 }
 
 void server_writefifo(int fd){
@@ -129,7 +137,7 @@ void server_writefifo(int fd){
 	char sfd[len];
 	char ClientFifoPath[100];
 	sprintf( sfd, "%d", fd);
-	sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
+	fd2fifopath(fd,ClientFifoPath);
 	printf("%s\n", ClientFifoPath);
 
 	//write 2 
@@ -166,7 +174,7 @@ void on_write(int fd, short event, void *arg1)
 
 //	memset(buf,0,strlen(buf));
 	read(fd,buf,strlen(buf));
-	server_writefifo(fd); //逻辑处理
+	//server_writefifo(fd); //逻辑处理
 
 	write(fd, buf, strlen(buf));
 	close(fd);
@@ -184,7 +192,7 @@ void connection_accept(int fd, short event, void *arg)
 	//printf("%s\n", "ha");
 	/* for debugging */
 	ActiveConnection=atomic_read(&ActiveConnectionAtomic);
-	if(ActiveConnection > 2000){
+	if(ActiveConnection > 1000){
 		return;
 	}
 	fprintf(stderr, "%s(): fd = %d, event = %d, conn = %d.\n", __func__, fd, event,ActiveConnection);
