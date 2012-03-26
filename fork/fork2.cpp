@@ -174,7 +174,7 @@ void on_write(int fd, short event, void *arg1)
 
 //	memset(buf,0,strlen(buf));
 	read(fd,buf,strlen(buf));
-	//server_writefifo(fd); //逻辑处理
+	server_writefifo(fd); //逻辑处理
 
 	write(fd, buf, strlen(buf));
 	close(fd);
