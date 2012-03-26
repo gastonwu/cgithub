@@ -18,51 +18,46 @@
 
 #define ForkNum 10
 #define SERVER_PORT 7000
-#define FifoServer "/tmp/fifo.server"
+#define FifoServer "/tmp/fifo.server."
 #define FifoClient "/tmp/fifo.client."
-#define FifoNum 2000
+//#define FifoNum 2000
 
+//FIFO FD
+int FIFO_CLIENT_R = -1;
+int FIFO_CLIENT_W = -1;
+int FIFO_SERVER_R = -1;
+int FIFO_SERVER_W = -1;
+//FIFO FD
 int ForkPos=0;
 atomic_t ActiveConnectionAtomic;
 static int ActiveConnection = 0;
 
-// void on_read(int fd, short event, void *arg1)
-// {
-// 	char buf[32];
-// 	struct tm t;
-// 	time_t now;
-// 	struct event *arg = (struct event *)arg1;
-
-// 	time(&now);
-// 	localtime_r(&now, &t);
-// 	asctime_r(&t, buf);
-
-// 	read(fd,buf,strlen(buf));
-
-// printf("on read:%s\n",buf);
-// 	//write(fd, buf, strlen(buf));
-// 	//shutdown(fd, SHUT_RDWR);
-
-// 	//free(arg);
-// }
-
-void fd2fifopath(int fd,char *path){
-	int pos = fd % FifoNum;
+void fd2client_fifopath(int fd,char *path){
+	int pos = fd % ForkNum;
 	sprintf( path, "%s%d", FifoClient,pos);
+}
+void fd2server_fifopath(int fd,char *path){
+	int pos = fd % ForkNum;
+	sprintf( path, "%s%d", FifoServer,pos);
 }
 
 void init_fifo(){
 	char ClientFifoPath[100];
-    if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
-       //printf("cannot create fifoserver\n");
-    }
+	char ServerFifoPath[100];
+    // if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
+    //    //printf("cannot create fifoserver\n");
+    // }
 
-	for(int i=0;i<FifoNum;i++){
-		fd2fifopath(i,ClientFifoPath);
+	for(int i=0;i<ForkNum;i++){
+		fd2client_fifopath(i,ClientFifoPath);
+		fd2server_fifopath(i,ServerFifoPath);
 		//sprintf( ClientFifoPath, "%s%d", FifoClient,i);
 
 		//write 2 
 	    if(mkfifo(ClientFifoPath,O_CREAT|O_EXCL)){
+	       //printf("cannot create fifoserver\n");
+	    }		
+	    if(mkfifo(ServerFifoPath,O_CREAT|O_EXCL)){
 	       //printf("cannot create fifoserver\n");
 	    }		
 	}
@@ -73,11 +68,14 @@ void client_writefifo(int fd){
 	char sfd[len];
 	char ClientFifoPath[100];
 	sprintf( sfd, "%d", fd);
-	fd2fifopath(fd,ClientFifoPath);
+	fd2client_fifopath(ForkPos,ClientFifoPath);
 	printf("%s\n", ClientFifoPath);
 
-	int fifo_fd=open(ClientFifoPath,O_WRONLY,0);
-	if((nwrite=write(fifo_fd,sfd,len))==-1)
+	if(FIFO_CLIENT_W == -1){
+		FIFO_CLIENT_W = open(ClientFifoPath,O_WRONLY,0);
+	}
+	//int fifo_fd=open(ClientFifoPath,O_WRONLY,0);
+	if((nwrite=write(FIFO_CLIENT_W,sfd,len))==-1)
 	{
 		if(errno==EAGAIN){
 			printf("The FIFO has not been read yet.Please try later\n");
@@ -96,14 +94,19 @@ void client_readfifo(){
 	int nread = 0;
 	char sfd[len];
 	char ClientFifoPath[100];
+	char ServerFifoPath[100];
 	char buf_r[len];
 	//sprintf( sfd, "%d", fd);
 	//sprintf( ClientFifoPath, "%s%d", FifoClient,fd);
-	int fifo_fd=open(FifoServer,O_RDONLY,0);
-	if((nread=read(fifo_fd,buf_r,len))==-1){
-            if(errno==EAGAIN){
-                //printf("no data yet\n");
-            }
+	fd2server_fifopath(ForkPos,ServerFifoPath);
+
+	if(FIFO_SERVER_R == -1){
+		FIFO_SERVER_R=open(ServerFifoPath,O_RDONLY,0);
+	}	
+	if((nread=read(FIFO_SERVER_R,buf_r,len))==-1){
+        if(errno==EAGAIN){
+            //printf("no data yet\n");
+        }
 	}else{
 		printf("server.fifo.read:%s\n",buf_r);
 		int client_fd = atoi(buf_r);
@@ -119,16 +122,19 @@ void server_readfifo(int fd){
 	char ClientFifoPath[100];
 	char buf_r[len];
 	//sprintf( sfd, "%d", fd);
-	fd2fifopath(fd,ClientFifoPath);
-	int fifo_fd=open(ClientFifoPath,O_RDONLY,0);
-	if((nread=read(fifo_fd,buf_r,len))==-1){
+	fd2client_fifopath(fd,ClientFifoPath);
+	if(FIFO_CLIENT_R == -1){
+		FIFO_CLIENT_R=open(ClientFifoPath,O_RDONLY,0);
+	}
+	
+	if((nread=read(FIFO_CLIENT_R,buf_r,len))==-1){
             if(errno==EAGAIN){
                 //printf("no data yet\n");
             }
 	}else{
 		printf("client.fifo.read:%s\n",buf_r);
 	}
-	close(fifo_fd);
+	//close(fifo_fd);
 
 }
 
@@ -137,9 +143,9 @@ void server_writefifo(int fd){
 	int nwrite = 0;
 	char sfd[len];
 	char ClientFifoPath[100];
+	char ServerFifoPath[100];
 	sprintf( sfd, "%d", fd);
-	fd2fifopath(fd,ClientFifoPath);
-	printf("%s\n", ClientFifoPath);
+	fd2server_fifopath(fd,ServerFifoPath);
 
 	//write 2 
     // if(mkfifo(FifoServer,O_CREAT|O_EXCL)){
@@ -149,8 +155,11 @@ void server_writefifo(int fd){
     //    //printf("cannot create fifoserver\n");
     // }
 
-	int fifo_fd=open(FifoServer,O_WRONLY,0);
-	if((nwrite=write(fifo_fd,sfd,len))==-1)
+	if(FIFO_SERVER_W == -1){
+		FIFO_SERVER_W=open(ServerFifoPath,O_WRONLY,0);
+	}
+	
+	if((nwrite=write(FIFO_SERVER_W,sfd,len))==-1)
 	{
 		if(errno==EAGAIN){
 			printf("The FIFO has not been read yet.Please try later\n");
@@ -183,7 +192,7 @@ void on_write(int fd, short event, void *arg1)
 	atomic_dec(&ActiveConnectionAtomic);
 	//shutdown(fd, SHUT_RDWR);
 
-	free(arg);
+	free(arg1);
 }
 
 void connection_accept(int fd, short event, void *arg)
