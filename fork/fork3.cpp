@@ -71,9 +71,13 @@ void client_writefifo(int fd){
 	fd2client_fifopath(ForkPos,ClientFifoPath);
 	printf("%s\n", ClientFifoPath);
 
+	// if((ForkPos == 1) || (ForkPos == 2)){
+	// 	sleep(1);
+	// }
 	if(FIFO_CLIENT_W == -1){
 		FIFO_CLIENT_W = open(ClientFifoPath,O_WRONLY,0);
 	}
+
 	//int fifo_fd=open(ClientFifoPath,O_WRONLY,0);
 	if((nwrite=write(FIFO_CLIENT_W,sfd,len))==-1)
 	{

@@ -21,7 +21,7 @@ fork3:
 client: libsqlparam libresult
 	g++ -g client.cpp -o client $(COMMON_PATH)
 clean:
-	rm -rf server client mysqlbind mysqltest fork fork2 *.o *.a *.pb.cc *.pb.h
+	rm -rf server client mysqlbind mysqltest fork fork2 fork3 *.o *.a *.pb.cc *.pb.h
 gencode:
 	protoc -I=./ --cpp_out=./ sqlparam.proto
 	protoc -I=./ --cpp_out=./ result.proto
