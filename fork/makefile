@@ -16,6 +16,8 @@ fork: libsqlparam libresult
 	g++ -g fork.cpp -o fork $(COMMON_PATH)	
 fork2: 
 	g++ -g fork2.cpp -o fork2 -levent
+fork3: 
+	g++ -g fork3.cpp -o fork3 -levent
 client: libsqlparam libresult
 	g++ -g client.cpp -o client $(COMMON_PATH)
 clean:
