@@ -12,9 +12,9 @@
 #include <sys/socketvar.h>
 #include <arpa/inet.h>
 
-//proto buffer
-#include "sqlparam.pb.h"
-#include "result.pb.h"
+// //proto buffer
+// #include "sqlparam.pb.h"
+// #include "result.pb.h"
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -58,12 +58,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    //protobuf encode & send
-    dbproxy::sqlparam sqlparam;
-    sqlparam.set_id(101);
-    	sqlparam.set_sql("select * from test.user where %s=%s limit 2");                     
-    	sqlparam.add_param("1");
-    	sqlparam.add_param("1");
+    // //protobuf encode & send
+    // dbproxy::sqlparam sqlparam;
+    // sqlparam.set_id(101);
+    // 	sqlparam.set_sql("select * from test.user where %s=%s limit 2");                     
+    // 	sqlparam.add_param("1");
+    // 	sqlparam.add_param("1");
     
 //    sqlparam.set_sql("insert into user(title) value('%s')");
 //    sqlparam.add_param("1");
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
    // sqlparam.add_param("2");
 
     string line;
-    sqlparam.SerializeToString(&line);
+    //sqlparam.SerializeToString(&line);
     line = "from client";
 
     //准备发送	
