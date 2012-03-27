@@ -271,6 +271,12 @@ int fork_process(int num){
 
 
 int net_process() {
+    int pid = fork();
+    if(pid ==0 ){
+        return 0;
+    }
+
+        
     int listen_fd, accept_fd, flag;
     struct sockaddr_in my_addr, remote_addr;
     if ((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -292,26 +298,15 @@ int net_process() {
         perror("bind error");
         exit(1);
     }
-    if (listen(listen_fd, 1) == -1) {
+    if (listen(listen_fd, 500) == -1) {
         perror("listen error");
         exit(1);
     }
-    int pid = -1;
+
     int addr_len = sizeof (struct sockaddr_in);
     int max_process_num = 3;
     int child_id;
-    int i;
-    int child_process_status;
-    for (i = 0; i < max_process_num; i++) {
-        if (pid != 0) {
-            pid = fork();
-        } else {
-            child_id = i;
-        }
-    }
 
-
-    if (pid == 0) {
         int accept_handles = 0;
         struct epoll_event ev, events[20];
         int epfd = epoll_create(256);
@@ -369,10 +364,6 @@ int net_process() {
                 }
             }
         }
-    } else {
-        //manager the process
-        wait(&child_process_status);
-    }
 
     return 0;
 }
