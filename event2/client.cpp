@@ -31,13 +31,14 @@ int main(int argc, char**argv)
     
     const char *line = "aaa";
     char buf[1024]= {0};
-    //for(int i=0;i<1000000;i++){
+    for(int i=0;i<2;i++){
         write(sockfd,line,strlen(line));
 
         int n = read( sockfd, buf,sizeof(buf));
         buf[n]='\0';
         printf("%s\n", buf);
-    //}
+    }
+    //sleep(100);
 
     close(sockfd);
     return 0;
