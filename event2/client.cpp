@@ -37,8 +37,8 @@ int main(int argc, char**argv)
         int n = read( sockfd, buf,sizeof(buf));
         buf[n]='\0';
         printf("%s\n", buf);
+            //sleep(10);
     }
-    //sleep(100);
 
     close(sockfd);
     return 0;

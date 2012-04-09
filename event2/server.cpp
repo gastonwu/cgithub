@@ -89,6 +89,11 @@ void do_accept(evutil_socket_t listener, short event, void *arg) {
     printf("ACCEPT: fd = %u\n", fd);
 
     struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+    
+    bufferevent_set_timeouts(bev, &timeout, NULL);
     bufferevent_setcb(bev, read_cb, NULL, error_cb, arg);
     bufferevent_enable(bev, EV_READ | EV_WRITE | EV_PERSIST);
 }
