@@ -34,7 +34,7 @@ void read_cb(struct bufferevent *bev, void *arg);
 void error_cb(struct bufferevent *bev, short event, void *arg);
 void write_cb(struct bufferevent *bev, void *arg);
 
-void server_writefifo(int fd);
+void server_writefifo(int fd,char* dataInput,char* dataOutput);
 int shm_data_write(int forkPos,char* data);
 int shm_data_read(int forkPos,char* data);
 
@@ -103,8 +103,8 @@ void do_accept(evutil_socket_t listener, short event, void *arg) {
 }
 
 void worker(int fd, char *input, char *output) {
-    server_writefifo(fd); //逻辑处理
-    sprintf(output, "%s%d\0", input, fd);
+    server_writefifo(fd,input,output); //逻辑处理
+    //sprintf(output, "%s%d\0", input, fd);
 }
 
 void read_cb(struct bufferevent *bev, void *arg) {
@@ -174,6 +174,7 @@ void fd2server_fifopath(int fd, char *path) {
 int shm_data_write(int forkPos,char* data){
     int shmid;
     char *addr;
+    forkPos = forkPos % ForkNum;
     int shm_pos = SHM_DATA_START + forkPos * SHM_DATA_LEN;
     shmid = shmget(shm_pos, SHM_DATA_LEN, IPC_CREAT | 0600);
     if (shmid == -1)
@@ -188,12 +189,14 @@ int shm_data_write(int forkPos,char* data){
         return -1;
     }
     strcpy(addr, data);
+    printf(":shm_data_write->%s\n",data);
     shmdt(addr);    
 }
 
 int shm_data_read(int forkPos,char* data){
     int shmid;
     //char *addr;
+    forkPos = forkPos % ForkNum;
     int shm_pos = SHM_DATA_START + forkPos * SHM_DATA_LEN;
     shmid = shmget(shm_pos, SHM_DATA_LEN, IPC_CREAT | 0600);
     if (shmid == -1)
@@ -202,6 +205,7 @@ int shm_data_read(int forkPos,char* data){
         return -1;
     }
     data = (char *)shmat(shmid, NULL, 0);
+    printf(":shm_data_read<-%s\n",data);
     if (data == (void *)-1)
     {
         perror("shmat");
@@ -277,12 +281,21 @@ void client_readfifo() {
     } else {
         printf("server.fifo.read:%s\n", buf_r);
         int client_fd = atoi(buf_r);
+        char input[SHM_DATA_LEN];
+        char output[SHM_DATA_LEN];
+        printf(":::::::::::::::::::::::::client_readfifo.read:::::::::::::::::::::::::\n");
+        shm_data_read(ForkPos,input);
         //client_fd = client_fd * 10;
+        ////////////////////////////logic process//////////////////////
+        sprintf(output,"******",input);
+        ////////////////////////////logic process/////////////////////
         client_writefifo(client_fd);
+        printf(":::::::::::::::::::::::::client_readfifo.write:::::::::::::::::::::::::\n");
+        shm_data_write(ForkPos,output);
     }
 }
 
-void server_readfifo(int fd) {
+void server_readfifo(int fd,char* dataOutput) {
     int len = 100;
     int nread = 0;
     char sfd[len];
@@ -301,11 +314,13 @@ void server_readfifo(int fd) {
     } else {
         printf("client.fifo.read:%s\n", buf_r);
     }
+    sprintf(dataOutput,"%s",dataOutput);
+    shm_data_read(fd,dataOutput);
     //close(fifo_fd);
 
 }
 
-void server_writefifo(int fd) {
+void server_writefifo(int fd,char* dataInput,char* dataOutput) {
     int len = 100;
     int nwrite = 0;
     char sfd[len];
@@ -325,7 +340,9 @@ void server_writefifo(int fd) {
     } else {
         printf("server.fifo.write:%s\n", sfd);
     }
-    server_readfifo(fd);
+    shm_data_write(fd,dataInput);
+
+    server_readfifo(fd,dataOutput);
 }
 
 int child_process() {

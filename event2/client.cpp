@@ -31,7 +31,7 @@ int main(int argc, char**argv)
     
     const char *line = "aaa";
     char buf[1024]= {0};
-    for(int i=0;i<2;i++){
+    for(int i=0;i<1;i++){
         write(sockfd,line,strlen(line));
 
         int n = read( sockfd, buf,sizeof(buf));
