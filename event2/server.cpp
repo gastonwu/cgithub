@@ -20,6 +20,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "./atomic.h"
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #include <event2/event.h>
 #include <event2/bufferevent.h>
@@ -33,6 +35,8 @@ void error_cb(struct bufferevent *bev, short event, void *arg);
 void write_cb(struct bufferevent *bev, void *arg);
 
 void server_writefifo(int fd);
+int shm_data_write(int forkPos,char* data);
+int shm_data_read(int forkPos,char* data);
 
 int net_process() {
     int ret;
@@ -143,6 +147,8 @@ void error_cb(struct bufferevent *bev, short event, void *arg) {
 #define SERVER_PORT 7000
 #define FifoServer "/tmp/fifo.server."
 #define FifoClient "/tmp/fifo.client."
+#define SHM_DATA_START 12345
+#define SHM_DATA_LEN 1000
 //#define FifoNum 2000
 
 //FIFO FD
@@ -163,6 +169,47 @@ void fd2client_fifopath(int fd, char *path) {
 void fd2server_fifopath(int fd, char *path) {
     int pos = fd % ForkNum;
     sprintf(path, "%s%d", FifoServer, pos);
+}
+
+int shm_data_write(int forkPos,char* data){
+    int shmid;
+    char *addr;
+    int shm_pos = SHM_DATA_START + forkPos * SHM_DATA_LEN;
+    shmid = shmget(shm_pos, SHM_DATA_LEN, IPC_CREAT | 0600);
+    if (shmid == -1)
+    {
+        perror("shmget");
+        return -1;
+    }
+    addr = (char *)shmat(shmid, NULL, 0);
+    if (addr == (void *)-1)
+    {
+        perror("shmat");
+        return -1;
+    }
+    strcpy(addr, data);
+    shmdt(addr);    
+}
+
+int shm_data_read(int forkPos,char* data){
+    int shmid;
+    //char *addr;
+    int shm_pos = SHM_DATA_START + forkPos * SHM_DATA_LEN;
+    shmid = shmget(shm_pos, SHM_DATA_LEN, IPC_CREAT | 0600);
+    if (shmid == -1)
+    {
+        perror("shmget");
+        return -1;
+    }
+    data = (char *)shmat(shmid, NULL, 0);
+    if (data == (void *)-1)
+    {
+        perror("shmat");
+        return -1;
+    }
+    printf("addr = %s\n", data);
+    shmdt(data);
+    return 0;
 }
 
 void init_fifo() {
