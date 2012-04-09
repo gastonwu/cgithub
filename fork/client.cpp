@@ -59,11 +59,11 @@ int main(int argc, char *argv[]) {
     }
 
     //protobuf encode & send
-    dbproxy::sqlparam sqlparam;
-    sqlparam.set_id(101);
-    	sqlparam.set_sql("select * from test.user where %s=%s limit 2");                     
-    	sqlparam.add_param("1");
-    	sqlparam.add_param("1");
+    // dbproxy::sqlparam sqlparam;
+    // sqlparam.set_id(101);
+    // 	sqlparam.set_sql("select * from test.user where %s=%s limit 2");                     
+    // 	sqlparam.add_param("1");
+    // 	sqlparam.add_param("1");
     
 //    sqlparam.set_sql("insert into user(title) value('%s')");
 //    sqlparam.add_param("1");

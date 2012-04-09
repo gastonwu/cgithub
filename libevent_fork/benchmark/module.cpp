@@ -36,13 +36,14 @@ int encodeRequest(char* data, unsigned &len)
 
 int decodeResponse(char* data,unsigned len)
 {
-	printf("%s\n",data);
-	if(len>0){
-		//return 3;
-		return 0;
-	}else{
-		return 2;
-	}
-	
+	// printf("%s\n",data);
+	// if(len>0){
+	// 	//return 3;
+	// 	return 0;
+	// }else{
+	// 	return 2;
+	// }
+
+	return 0;	
 }
 
