@@ -74,26 +74,27 @@ int main(int argc, char *argv[]) {
     string line;
     sqlparam.SerializeToString(&line);
 
-    //准备发送	
-    char * msg;
-    msg = new char [line.size() + 1];
-    strcpy(msg, line.c_str());
-    send(sockfd, msg, strlen(msg), 0);
-    delete[] msg;
+    for(int i=0;i<10000;i++){
+        //准备发送	
+        char * msg;
+        msg = new char [line.size() + 1];
+        strcpy(msg, line.c_str());
+        send(sockfd, msg, strlen(msg), 0);
+        delete[] msg;
 
-    /*连接成功*/
-    if ((nbytes = recv(sockfd, buffer, RECVBUFSIZE, 0)) == -1) {
-        fprintf(stderr, "Read Error:%s\n", strerror(errno));
-        exit(1);
+        /*连接成功*/
+        if ((nbytes = recv(sockfd, buffer, RECVBUFSIZE, 0)) == -1) {
+            fprintf(stderr, "Read Error:%s\n", strerror(errno));
+            exit(1);
+        }
+        //buffer[nbytes] = '\0';
+        //protobuf start
+        dbproxy::dbresult dbresult;
+        string line2(buffer);
+        dbresult.ParseFromString(line2);
+        //cout << "\nbuffer[" << buffer << "]\n" << endl;
+        cout << "\n-" << dbresult.DebugString() << "-\n" << endl;
     }
-    //buffer[nbytes] = '\0';
-    //protobuf start
-    dbproxy::dbresult dbresult;
-    string line2(buffer);
-    dbresult.ParseFromString(line2);
-    //cout << "\nbuffer[" << buffer << "]\n" << endl;
-    cout << "\n-" << dbresult.DebugString() << "-\n" << endl;
-
     //printf("I have received:%s\n", buffer);
     /*结束通讯*/
     close(sockfd);
