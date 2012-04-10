@@ -19,7 +19,7 @@
 #include <fstream>
 using namespace std;
 
-#define RECVBUFSIZE 1024
+#define RECVBUFSIZE 10240
 
 int main(int argc, char *argv[]) {
     int sockfd;
@@ -61,15 +61,15 @@ int main(int argc, char *argv[]) {
     //protobuf encode & send
     dbproxy::sqlparam sqlparam;
     sqlparam.set_id(101);
-    	sqlparam.set_sql("select * from test.user where %s=%s limit 2");                     
-    	sqlparam.add_param("1");
-    	sqlparam.add_param("1");
-    
-//    sqlparam.set_sql("insert into user(title) value('%s')");
-//    sqlparam.add_param("1");
+    sqlparam.set_sql("select * from test.user where %s=%s limit 2");
+    sqlparam.add_param("1");
+    sqlparam.add_param("1");
 
-     //sqlparam.set_sql("update  user set title='111'");
-   // sqlparam.add_param("2");
+    //    sqlparam.set_sql("insert into user(title) value('%s')");
+    //    sqlparam.add_param("1");
+
+    //sqlparam.set_sql("update  user set title='111'");
+    // sqlparam.add_param("2");
 
     string line;
     sqlparam.SerializeToString(&line);
@@ -91,6 +91,7 @@ int main(int argc, char *argv[]) {
     dbproxy::dbresult dbresult;
     string line2(buffer);
     dbresult.ParseFromString(line2);
+    //cout << "\nbuffer[" << buffer << "]\n" << endl;
     cout << "\n-" << dbresult.DebugString() << "-\n" << endl;
 
     //printf("I have received:%s\n", buffer);

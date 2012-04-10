@@ -13,10 +13,12 @@ server:
 	g++ -g server.cpp -o server -levent
 client:
 	g++ -g client.cpp -o client -levent
-client.pb: libsqlparam libresult
+client.pb: 
 	g++ -g client.pb.cpp -o client.pb -levent $(COMMON_PATH)
+server.pb: 
+	g++ -g server.pb.cpp -o server.pb -levent $(COMMON_PATH)
 clean:
-	rm -rf server client client.pb server.pb *.a *.pb.h *.pb.cc
+	rm -rf server client client.pb server.pb *.a *.pb.h *.pb.cc *.pb.o
 gencode:
 	protoc -I=./ --cpp_out=./ sqlparam.proto
 	protoc -I=./ --cpp_out=./ result.proto

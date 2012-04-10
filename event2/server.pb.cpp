@@ -26,8 +26,28 @@
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 
+//mysql
+#include <string>
+#include <map>
+#include <vector>
+#include <mysql.h>
+#include <aio.h>
+
+//proto buffer
+#include "sqlparam.pb.h"
+#include "result.pb.h"
+#include <iostream>
+#include <fstream>
+using namespace std;
+
 #define LISTEN_PORT 9995
 #define LISTEN_BACKLOG 32
+
+char proxy_mysql_errmsg[1024];
+MYSQL proxy_mysql_connection;
+MYSQL_RES* proxy_mysql_result;
+MYSQL_ROW proxy_mysql_row;
+bool proxy_mysql_is_connection;
 
 void do_accept(evutil_socket_t listener, short event, void *arg);
 void read_cb(struct bufferevent *bev, void *arg);
@@ -37,6 +57,126 @@ void write_cb(struct bufferevent *bev, void *arg);
 void server_writefifo(int fd, char* dataInput, char* dataOutput);
 int shm_data_write(int forkPos, char* data);
 int shm_data_read(int forkPos, char* data);
+
+
+int proxy_mysql_connect() {
+    //*
+    if (!proxy_mysql_is_connection) {
+        if (mysql_real_connect(&proxy_mysql_connection, "127.0.0.1", "root", "windows", "test", 3306, NULL, 0) == NULL) {
+            sprintf(proxy_mysql_errmsg, "Connecting to DataBase error:%s", mysql_error(&proxy_mysql_connection));
+            return -1;
+        }
+
+        //it is better to change the config
+        if (mysql_options(&proxy_mysql_connection, MYSQL_SET_CHARSET_NAME, "UTF8")) {
+            sprintf(proxy_mysql_errmsg, "set charset names error:%s", mysql_error(&proxy_mysql_connection));
+            return -1;
+
+        }
+        if (mysql_set_character_set(&proxy_mysql_connection, "UTF8")) {
+            sprintf(proxy_mysql_errmsg, "set character error:%s", mysql_error(&proxy_mysql_connection));
+            return -1;
+        }
+        proxy_mysql_is_connection = true;
+        printf("connect mysql success.\n");
+    } else {
+
+    }
+    //*/
+    return 0;
+}
+
+dbproxy::dbresult proxy_mysql_query(string sql) {
+    MYSQL *conn;
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+    MYSQL_FIELD *field;
+    int num_fields, i;
+
+
+    proxy_mysql_connect();
+    //sql = "select * from t1";
+    cout << "sql:" + sql + "\n" << endl;
+
+    mysql_query(&proxy_mysql_connection, sql.c_str());
+    int affectRow = mysql_affected_rows(&proxy_mysql_connection);
+
+
+    result = mysql_store_result(&proxy_mysql_connection);
+
+    if (result) {
+        num_fields = mysql_num_fields(result);
+    } else {
+        num_fields = 0;
+    }
+
+
+
+    map<int, string> mapField;
+
+    int loop = 0;
+    if (result) {
+        while (field = mysql_fetch_field(result)) {
+            mapField[loop] = field->name;
+            loop++;
+            printf("%s ", field->name);
+        }
+    }
+
+    dbproxy::dbresult dbresult;
+    {
+
+    }
+    dbresult.set_affectrows(affectRow);
+
+
+
+    if (result) {
+        while ((row = mysql_fetch_row(result))) {
+            dbproxy::dbrow* dbrow = dbresult.add_rows();
+            for (i = 0; i < num_fields; i++) {
+                dbproxy::dbcol* dbcol = dbrow->add_cols();
+                dbcol->set_field(mapField[i]);
+                dbcol->set_val(row[i]);
+
+            }
+        }
+    }
+
+    mysql_free_result(result);
+
+
+    return dbresult;
+}
+
+int proxy_mysql_close() {
+}
+
+string sqlBind(dbproxy::sqlparam sqlparam) {
+
+    string sql2 = sqlparam.sql();
+    int pos = 0;
+    string pos_str;
+    for (int i = 0; i < sql2.length(); i++) {
+        if (sql2[i] != '%') {
+            continue;
+        }
+        if ((i + 1) >= sql2.length()) {
+            continue;
+        }
+        if (sql2[i + 1] != 's') {
+            continue;
+        }
+        sql2.replace(i, 2, sqlparam.param(pos));
+        string pos_str = sqlparam.param(pos);
+        i = i + pos_str.length();
+        pos++;
+
+
+    }
+
+    return sql2;
+}
 
 int net_process() {
     int ret;
@@ -118,7 +258,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
         line[n] = '\0';
         printf("fd=%u, read line: %s\n", fd, line);
         worker((int) fd, line, output);
-        printf("out line: %s,len=%d\n", output,strlen(output));
+        //printf("out line: %s,len=%d\n", output,strlen(output));
 
         bufferevent_write(bev, output, strlen(output));
     }
@@ -188,7 +328,7 @@ int shm_data_write(int forkPos, char* data) {
         return -1;
     }
     strcpy(addr, data);
-    printf(":shm_data_write->%s\n", data);
+    //printf(":shm_data_write->%s\n", data);
     shmdt(addr);
 }
 
@@ -203,14 +343,14 @@ int shm_data_read(int forkPos, char* data) {
         return -1;
     }
     addr = (char *) shmat(shmid, NULL, 0);
-    printf(":shm_data_read<-%s\n", addr);
+    //printf(":shm_data_read<-%s\n", addr);
     if (addr == (void *) - 1) {
         perror("shmat");
         return -1;
     }
     strcpy(data,addr);
-    printf("addr = %s,len=%d\n", addr,strlen(addr));
-    printf("addr = %s,len=%d\n", data,strlen(data));
+//    printf("addr = %s,len=%d\n", addr,strlen(addr));
+//    printf("addr = %s,len=%d\n", data,strlen(data));
     shmdt(addr);
     return 0;
 }
@@ -258,6 +398,30 @@ void client_writefifo(int fd) {
 
 }
 
+void debugResult(const char* result){
+    dbproxy::dbresult dbresult;
+    string line(result);
+    dbresult.ParseFromString(line);
+    cout << "\n**************************\n" << dbresult.DebugString() << "\n**************************\n" << endl;
+}
+void mysql_worker(char* input,char *output){
+        dbproxy::sqlparam sqlparam;
+        string line(input);
+        sqlparam.ParseFromString(line);
+        string sql = sqlBind(sqlparam);
+        cout << "\n::\n" << sqlparam.DebugString() << "\n::\n" << endl;
+        cout << "\n::\n" << sql << "\n::\n" << endl;
+        dbproxy::dbresult dbresult = proxy_mysql_query(sql);
+        string result;
+        dbresult.SerializeToString(&result);
+        //cout << "\n::\n" << dbresult.DebugString() << "\n::\n" << endl;
+        //cout << "\n::\n" << result << "\n::\n" << endl;
+        //output = result.c_str();
+        strcpy(output, result.c_str());
+        //debugResult(output);
+        //sprintf(output, "%s", result.c_str());
+}
+
 void client_readfifo() {
     int len = 100;
     int nread = 0;
@@ -287,11 +451,12 @@ void client_readfifo() {
         printf("input:%s\n",input);
         //client_fd = client_fd * 10;
         ////////////////////////////logic process//////////////////////
-        sprintf(output, "12345678", input);
+        mysql_worker(input,output);
         ////////////////////////////logic process/////////////////////
-        client_writefifo(client_fd);
         printf(":::::::::::::::::::::::::client_readfifo.write:::::::::::::::::::::::::\n");
+        debugResult(output);
         shm_data_write(ForkPos, output);
+        client_writefifo(client_fd);
     }
 }
 
@@ -318,7 +483,8 @@ void server_readfifo(int fd, char* dataOutput) {
     printf(":::::::::::::::::::::::::server_readfifo.read:::::::::::::::::::::::::\n");
     //char dataOutput2[1000];
     shm_data_read(fd, dataOutput);
-    printf("line:%s\n",dataOutput);
+    debugResult(dataOutput);
+    //printf("line:%s\n",dataOutput);
     //sprintf(dataOutput, "%s", dataOutput2);
     //close(fifo_fd);
 
@@ -348,6 +514,7 @@ void server_writefifo(int fd, char* dataInput, char* dataOutput) {
     shm_data_write(fd, dataInput);
 
     server_readfifo(fd, dataOutput);
+    
 }
 
 int child_process() {
