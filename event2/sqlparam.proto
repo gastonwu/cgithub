@@ -1,0 +1,7 @@
+package dbproxy; 
+message sqlparam
+{
+required int32 id = 1 ; 
+required string sql = 2 ;
+repeated string param = 3;
+}

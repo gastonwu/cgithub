@@ -1,0 +1,17 @@
+package dbproxy; 
+
+message dbcol{
+	optional string field = 1;
+	required string val = 2;
+}
+
+message dbrow {
+	repeated dbcol cols = 1;
+}
+
+message dbresult
+{
+	optional int32 affectRows = 1 ; 
+	optional int32 flag = 2 ;
+	repeated dbrow rows = 3;
+}
