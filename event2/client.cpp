@@ -35,8 +35,8 @@ int main(int argc, char**argv)
         write(sockfd,line,strlen(line));
 
         int n = read( sockfd, buf,sizeof(buf));
-        buf[n]='\0';
-        printf("%s\n", buf);
+        //buf[n]='\0';
+        printf("read:%s,len:%d\n", buf,n);
             //sleep(10);
     }
 

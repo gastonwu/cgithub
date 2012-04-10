@@ -118,6 +118,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
         line[n] = '\0';
         printf("fd=%u, read line: %s\n", fd, line);
         worker((int) fd, line, output);
+        printf("out line: %s,len=%d\n", output,strlen(output));
 
         bufferevent_write(bev, output, strlen(output));
     }
@@ -193,7 +194,7 @@ int shm_data_write(int forkPos, char* data) {
 
 int shm_data_read(int forkPos, char* data) {
     int shmid;
-    //char *addr;
+    char *addr;
     forkPos = forkPos % ForkNum;
     int shm_pos = SHM_DATA_START + forkPos * SHM_DATA_LEN;
     shmid = shmget(shm_pos, SHM_DATA_LEN, IPC_CREAT | 0600);
@@ -201,14 +202,16 @@ int shm_data_read(int forkPos, char* data) {
         perror("shmget");
         return -1;
     }
-    data = (char *) shmat(shmid, NULL, 0);
-    printf(":shm_data_read<-%s\n", data);
-    if (data == (void *) - 1) {
+    addr = (char *) shmat(shmid, NULL, 0);
+    printf(":shm_data_read<-%s\n", addr);
+    if (addr == (void *) - 1) {
         perror("shmat");
         return -1;
     }
-    printf("addr = %s\n", data);
-    shmdt(data);
+    strcpy(data,addr);
+    printf("addr = %s,len=%d\n", addr,strlen(addr));
+    printf("addr = %s,len=%d\n", data,strlen(data));
+    shmdt(addr);
     return 0;
 }
 
@@ -281,9 +284,10 @@ void client_readfifo() {
         char output[SHM_DATA_LEN];
         printf(":::::::::::::::::::::::::client_readfifo.read:::::::::::::::::::::::::\n");
         shm_data_read(ForkPos, input);
+        printf("input:%s\n",input);
         //client_fd = client_fd * 10;
         ////////////////////////////logic process//////////////////////
-        sprintf(output, "******", input);
+        sprintf(output, "12345678", input);
         ////////////////////////////logic process/////////////////////
         client_writefifo(client_fd);
         printf(":::::::::::::::::::::::::client_readfifo.write:::::::::::::::::::::::::\n");
@@ -310,8 +314,12 @@ void server_readfifo(int fd, char* dataOutput) {
     } else {
         printf("client.fifo.read:%s\n", buf_r);
     }
-    sprintf(dataOutput, "%s", dataOutput);
+    
+    printf(":::::::::::::::::::::::::server_readfifo.read:::::::::::::::::::::::::\n");
+    //char dataOutput2[1000];
     shm_data_read(fd, dataOutput);
+    printf("line:%s\n",dataOutput);
+    //sprintf(dataOutput, "%s", dataOutput2);
     //close(fifo_fd);
 
 }
@@ -336,6 +344,7 @@ void server_writefifo(int fd, char* dataInput, char* dataOutput) {
     } else {
         printf("server.fifo.write:%s\n", sfd);
     }
+    printf("----------------%s-------------------\n",dataInput);
     shm_data_write(fd, dataInput);
 
     server_readfifo(fd, dataOutput);
