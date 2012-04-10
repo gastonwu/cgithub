@@ -5,7 +5,7 @@ LIB_RESULT		   = ./libresult.a
 LIB_PROTOBUF       = $(PROTOBUF_LIBFILE) -lpthread 
 INC_MYSQL		   = -I/usr/include/mysql
 LIB_MYSQL		   = -L/usr/lib/mysql/ `mysql_config --cflags --libs`
-COMMON_PATH		   = $(LIB_SQLPARAM) $(LIB_RESULT) $(LIB_PROTOBUF) $(INC_PROTOBUF) $(INC_MYSQL) $(LIB_MYSQL)
+COMMON_PATH	= $(LIB_SQLPARAM) $(LIB_RESULT) $(LIB_PROTOBUF) $(INC_PROTOBUF) $(INC_MYSQL) $(LIB_MYSQL)
 
 
 all: server client

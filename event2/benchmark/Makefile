@@ -1,7 +1,17 @@
+INC_PROTOBUF       = -I/usr/local/protobuf/include -I./ 
+PROTOBUF_LIBFILE   = /usr/local/protobuf/lib/libprotobuf.a
+LIB_SQLPARAM	   = ../libsqlparam.a
+LIB_RESULT		   = ../libresult.a
+LIB_PROTOBUF       = $(PROTOBUF_LIBFILE) -lpthread 
+INC_MYSQL		   = -I/usr/include/mysql
+LIB_MYSQL		   = -L/usr/lib/mysql/ `mysql_config --cflags --libs`
+COMMON_PATH	= $(LIB_SQLPARAM) $(LIB_RESULT) $(LIB_PROTOBUF) $(INC_PROTOBUF) $(INC_MYSQL) $(LIB_MYSQL)
+
+
 DEF= -DCOMPILE_DATE=\"$(DATE)\" -DCOMPILE_TIME=\"$(TIME)\" -DVERSION=\"$(VER)\"
 
-PROJ_ROOT =/home/gaston/cpp/fork/benchmark
-INC = -I$(PROJ_ROOT)/
+PROJ_ROOT =./benchmark
+INC = -I$(PROJ_ROOT)/ ${COMMON_PATH}
 LIB = -lpthread -ldl -lz -lm 
 
 C_FLAGS =  -O0  $(DEF) -g  -Wall  -pg

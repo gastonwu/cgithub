@@ -4,32 +4,36 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
-
+//
+////proto buffer
+//#include "../sqlparam.pb.h"
+//#include "../result.pb.h"
+//#include <iostream>
+//#include <fstream>
 using namespace std;
+
 
 int encodeRequest(char* data, unsigned &len)
 {
-	// char err_msg[64];
-	// char body_buf[1024];
+    //protobuf encode & send
+//    dbproxy::sqlparam sqlparam;
+//    sqlparam.set_id(101);
+//    sqlparam.set_sql("select * from test.user where %s=%s limit 2");
+//    sqlparam.add_param("1");
+//    sqlparam.add_param("1");
+
+    //    sqlparam.set_sql("insert into user(title) value('%s')");
+    //    sqlparam.add_param("1");
+
+    //sqlparam.set_sql("update  user set title='111'");
+    // sqlparam.add_param("2");
+
+//    string line;
+//    sqlparam.SerializeToString(&line);
+    
 	char send_buf[1024];
 	sprintf(send_buf,"%s","haha");
 	len = strlen(send_buf);
-	// CMsgHeader _msg_header; 
-	// _msg_header.version = 1;
-	// _msg_header.cmd_type = REQUEST;
-	// _msg_header.cmd_id = 2112;
-	// _msg_header.uin = 221275102;
-
-
-	// //encode body
-	// CStreamEncoder encoder(body_buf, sizeof(body_buf));
-	// encoder.EncodeNUInt16LVString("faddrname",strlen("faddrname"));
-	// encoder.EncodeNUInt16LVString("fext1",strlen("fext1"));
-	
-	// int body_len = encoder.GetCurLen();
-	// EncodePkg(send_buf, sizeof(send_buf), &_msg_header, body_len, body_buf, 0, NULL,err_msg);
-
-	// len = _msg_header.total_len;
 	memcpy(data,send_buf,len);
 	return 0;
 }
