@@ -315,7 +315,7 @@ int fork_process(int num){
 }
 
 int main(){
-	signal(SIGCLD, SIG_IGN);
+	//signal(SIGCLD, SIG_IGN);
 
 //printf("%s\n", eventop.);
 	atomic_set(&ActiveConnectionAtomic,0);
