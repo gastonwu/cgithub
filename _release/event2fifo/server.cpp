@@ -216,14 +216,14 @@ void client_readfifo() {
 
     if (FIFO_SERVER_R == -1) {
         FIFO_SERVER_R = open(ServerFifoPath, O_RDONLY, 0);
-        printf("FIFO_SERVER_R::%d - %s\n", FIFO_SERVER_R, ServerFifoPath);
+        //printf("FIFO_SERVER_R::%d - %s\n", FIFO_SERVER_R, ServerFifoPath);
     }
     if ((nread = read(FIFO_SERVER_R, buf_r, len)) == -1) {
         if (errno == EAGAIN) {
             printf("no data yet\n");
         }
     } else {
-        printf("server.fifo.read:%s\n", buf_r);
+        //printf("server.fifo.read:%s\n", buf_r);
         int client_fd = atoi(buf_r);
         //client_fd = client_fd * 10;
         client_writefifo(client_fd);
@@ -271,7 +271,7 @@ void server_writefifo(int fd) {
             printf("The FIFO has not been read yet.Please try later\n");
         }
     } else {
-        printf("server.fifo.write:%s\n", sfd);
+        //printf("server.fifo.write:%s\n", sfd);
     }
     server_readfifo(fd);
 }
@@ -284,7 +284,7 @@ int child_process() {
         client_readfifo();
         //usleep(1000000);
         usleep(10);
-        printf("%s-%d-pos:%d\n", "child", pid, ForkPos);
+        //printf("%s-%d-pos:%d\n", "child", pid, ForkPos);
     }
     printf("%s-%d\n", "child_process", pid);
 }
@@ -312,7 +312,7 @@ int fork_process(int num) {
 }
 
 int main() {
-    signal(SIGCLD, SIG_IGN);
+    //signal(SIGCLD, SIG_IGN);
 
     atomic_set(&ActiveConnectionAtomic, 0);
     init_fifo();
