@@ -553,7 +553,7 @@ int fork_process(int num) {
 }
 
 int main() {
-    signal(SIGCLD, SIG_IGN);
+    //signal(SIGCLD, SIG_IGN);
 
     atomic_set(&ActiveConnectionAtomic, 0);
     init_fifo();
