@@ -62,7 +62,7 @@ int shm_data_read(int forkPos, char* data);
 int proxy_mysql_connect() {
     //*
     if (!proxy_mysql_is_connection) {
-        if (mysql_real_connect(&proxy_mysql_connection, "127.0.0.1", "root", "windows", "test", 3306, NULL, 0) == NULL) {
+        if (mysql_real_connect(&proxy_mysql_connection, "127.0.0.1", "root", "", "test", 3306, NULL, 0) == NULL) {
             sprintf(proxy_mysql_errmsg, "Connecting to DataBase error:%s", mysql_error(&proxy_mysql_connection));
             return -1;
         }

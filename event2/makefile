@@ -8,7 +8,7 @@ LIB_PROTOBUF       = $(PROTOBUF_LIBFILE) -lpthread
 # INC_MYSQL		   = -I/usr/include/mysql
 # LIB_MYSQL		   = -L/usr/lib/mysql/ `mysql_config --cflags --libs`
 INC_MYSQL		   = -I/usr/local/mysql/include
-LIB_MYSQL		   = -L/usr/local/mysql/lib
+LIB_MYSQL		   = -L/usr/local/mysql/lib -lmysqlclient
 
 
 COMMON_PATH	= $(LIB_SQLPARAM) $(LIB_RESULT) $(LIB_PROTOBUF) $(INC_LIBEVENT) $(INC_PROTOBUF) $(INC_MYSQL) $(LIB_MYSQL)

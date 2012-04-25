@@ -65,16 +65,17 @@ int main(int argc, char *argv[]) {
     sqlparam.add_param("1");
     sqlparam.add_param("1");
 
-    //    sqlparam.set_sql("insert into user(title) value('%s')");
-    //    sqlparam.add_param("1");
+       // sqlparam.set_sql("insert into user(title) value('%s')");
+       // sqlparam.add_param("1");
 
     //sqlparam.set_sql("update  user set title='111'");
     // sqlparam.add_param("2");
 
     string line;
     sqlparam.SerializeToString(&line);
+        cout << "\n-" << sqlparam.DebugString() << "-\n" << endl;
 
-    for(int i=0;i<10000;i++){
+    //for(int i=0;i<10000;i++){
         //准备发送	
         char * msg;
         msg = new char [line.size() + 1];
@@ -87,14 +88,15 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Read Error:%s\n", strerror(errno));
             exit(1);
         }
+
         //buffer[nbytes] = '\0';
         //protobuf start
         dbproxy::dbresult dbresult;
         string line2(buffer);
         dbresult.ParseFromString(line2);
-        //cout << "\nbuffer[" << buffer << "]\n" << endl;
+        cout << "\nbuffer:" << buffer << "\n" << endl;
         cout << "\n-" << dbresult.DebugString() << "-\n" << endl;
-    }
+    //}
     //printf("I have received:%s\n", buffer);
     /*结束通讯*/
     close(sockfd);
