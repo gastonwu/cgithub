@@ -1,0 +1,32 @@
+Usage: 
+benchmark [-H <host>] [-p <port>] [-c <clients>] [-n <requests]> [-u]
+ -H <host> Server ip (default 127.0.0.1)
+ -p <port> Server port (default 5113)
+ -c <clients> Number of parallel connections (default 5)
+ -n <requests> Total number of requests (default 50)
+ -k keep alive or reconnect (default is reconnect)
+ -u benchmark with udp protocol(tcp is default)
+
+for example:
+server:/home/dcshi/benchmark# ./benchmark -c 10 -n 10 -p 37301 -u 
+10 parallel clients
+10 completed in 0 seconds
+10% <= 7 milliseconds
+20% <= 12 milliseconds
+40% <= 17 milliseconds
+50% <= 22 milliseconds
+60% <= 27 milliseconds
+70% <= 32 milliseconds
+80% <= 36 milliseconds
+90% <= 42 milliseconds
+100% <= 49 milliseconds
+158.73 requests per second
+
+
+如何定制测试用例？
+1.mkdir module
+2.创建一个.cpp文件，包含"module.h"头文件，并重载以下两个函数：
+int encodeRequest(char* data, unsigned &len); //发包编码函数。把需要发送的包体内容拷贝到data，发送长度赋值给len
+int decodeResponse(char* data,unsigned len);  //回包解码函数。判断回包的合法性.返回0，表示当前回复合法，则代表完成一个压测请求
+
+
