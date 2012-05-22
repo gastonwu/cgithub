@@ -8,4 +8,4 @@ client:
 test:
 	g++ -g test.cpp -o test
 clean:
-	rm -rf server client
+	rm -rf server client test
