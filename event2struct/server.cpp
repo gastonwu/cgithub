@@ -98,6 +98,19 @@ void read_cb(struct bufferevent *bev, void *arg)
     //close(fd);
 }
 
+void processRequest(char* recv,char* send){
+    
+}
+
+void cmd_1(char* data,char* send){
+
+}
+
+void cmd_2(char* data,char* send){
+
+}
+
+
 void write_cb(struct bufferevent *bev, void *arg) {}
 
 void error_cb(struct bufferevent *bev, short event, void *arg)
