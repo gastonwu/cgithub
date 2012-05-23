@@ -1,130 +1,187 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <assert.h>
-#include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
-#include <event2/event.h>
-#include <event2/bufferevent.h>
-#include "game.h"
 
-#define LISTEN_PORT 9995
-#define LISTEN_BACKLOG 32
+#define MAXBUF 1024
+#define MAXEPOLLSIZE 10000
 
-void do_accept(evutil_socket_t listener, short event, void *arg);
-void read_cb(struct bufferevent *bev, void *arg);
-void error_cb(struct bufferevent *bev, short event, void *arg);
-void write_cb(struct bufferevent *bev, void *arg);
-
-int main(int argc, char *argv[])
-{
-    int ret;
-    evutil_socket_t listener;
-    listener = socket(AF_INET, SOCK_STREAM, 0);
-    assert(listener > 0);
-    evutil_make_listen_socket_reuseable(listener);
-
-    struct sockaddr_in sin;
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = 0;
-    sin.sin_port = htons(LISTEN_PORT);
-
-    if (bind(listener, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-        perror("bind");
-        return 1;
+/*
+   setnonblocking - 设置句柄为非阻塞方式
+ */
+int setnonblocking(int sockfd) {
+    int v;
+    v = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &v, sizeof (v));
+    
+    if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, 0) | O_NONBLOCK) == -1) {
+        return -1;
     }
-
-    if (listen(listener, LISTEN_BACKLOG) < 0) {
-        perror("listen");
-        return 1;
-    }
-
-    printf ("Listening...\n");
-
-    evutil_make_socket_nonblocking(listener);
-
-    struct event_base *base = event_base_new();
-    assert(base != NULL);
-    struct event *listen_event;
-    listen_event = event_new(base, listener, EV_READ|EV_PERSIST, do_accept, (void*)base);
-    event_add(listen_event, NULL);
-    event_base_dispatch(base);
-
-    printf("The End.");
     return 0;
 }
 
-void do_accept(evutil_socket_t listener, short event, void *arg)
-{
-    struct event_base *base = (struct event_base *)arg;
-    evutil_socket_t fd;
-    struct sockaddr_in sin;
-    socklen_t slen;
-    fd = accept(listener, (struct sockaddr *)&sin, &slen);
-    if (fd < 0) {
-        perror("accept");
-        return;
+/*
+   handle_message - 处理每个 socket 上的消息收发
+ */
+int handle_message(int new_fd) {
+    char buf[MAXBUF + 1];
+    int len;
+    /* 开始处理每个新连接上的数据收发 */
+    bzero(buf, MAXBUF + 1);
+    /* 接收客户端的消息 */
+    len = recv(new_fd, buf, MAXBUF, 0);
+    if (len > 0){
+        printf
+            ("%d接收消息成功:'%s'，共%d个字节的数据\n",
+            new_fd, buf, len);
+        
+        
+        char hello[] = "Hello! (通讯)Socket communication world!\n";
+        if (send(new_fd, hello, strlen(hello), 0) == -1) {
+            fprintf(stderr, "Write Error:%s\n", strerror(errno));
+            exit(1);
+        }
+        close(new_fd);
+    }else {
+        if (len < 0)
+            printf
+                ("消息接收失败！错误代码是%d，错误信息是'%s'\n",
+                errno, strerror(errno));
+        close(new_fd);
+        return -1;
     }
-    if (fd > FD_SETSIZE) {
-        perror("fd > FD_SETSIZE\n");
-        return;
-    }
-
-    printf("ACCEPT: fd = %u\n", fd);
-
-    struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
-    bufferevent_setcb(bev, read_cb, NULL, error_cb, arg);
-    bufferevent_enable(bev, EV_READ|EV_WRITE|EV_PERSIST);
+    /* 处理每个新连接上的数据收发结束 */
+    return len;
 }
 
-void read_cb(struct bufferevent *bev, void *arg)
-{
-    #define MAX_LINE    256
-    char buffer[MAX_LINE];
-    UsrData recvUser;
-    char line[MAX_LINE+1];
-    int n;
-    evutil_socket_t fd = bufferevent_getfd(bev);
-
-    while (n = bufferevent_read(bev, buffer, MAX_LINE), n > 0) {
-        buffer[n]='\0';
-        //printf("fd=%u, read line: %s\n", fd, buffer);
-        memcpy( &recvUser, buffer, sizeof(recvUser) );
-        printf("fd=%u, read line: %s \tage:%d\n", fd, recvUser.usr_nickname,recvUser.age);
-
-        //bufferevent_write(bev, student1.name, strlen(student1.name));
+/************ 关于本文档********************************************
+ *filename: epoll-server.c
+ *purpose: 演示epoll处理海量socket连接的方法
+ *wrote by: zhoulifa(zhoulifa@163.com) 周立发(http://zhoulifa.bokee.com)
+ Linux爱好者 Linux知识传播者 SOHO族 开发者 最擅长C语言
+ *date time:2007-01-31 21:00
+ *Note: 任何人可以任意复制代码并运用这些文档，当然包括你的商业用途
+ * 但请遵循GPL
+ *Thanks to:Google
+ *Hope: 希望越来越多的人贡献自己的力量，为科学技术发展出力
+ * 科技站在巨人的肩膀上进步更快！感谢有开源前辈的贡献！
+ *********************************************************************/
+int main() {
+    printf("%s\n","hello");
+    if(1){
+        return 0;
     }
-    //close(fd);
-}
+    int listener, new_fd, kdpfd, nfds, n, ret, curfds;
+    socklen_t len;
+    struct sockaddr_in my_addr, their_addr;
+    unsigned int myport, lisnum;
+    struct epoll_event ev;
+    struct epoll_event events[MAXEPOLLSIZE];
+    struct rlimit rt;
 
-void processRequest(char* recv,char* send){
-    
-}
+    myport = 7838;
+    lisnum = 10;
 
-void cmd_1(char* data,char* send){
+    /* 设置每个进程允许打开的最大文件数 */
+    rt.rlim_max = rt.rlim_cur = MAXEPOLLSIZE;
+    if (setrlimit(RLIMIT_NOFILE, &rt) == -1) {
+        perror("setrlimit");
+        exit(1);
+    } else printf("设置系统资源参数成功！\n");
 
-}
+    /* 开启 socket 监听 */
+    if ((listener = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("socket");
+        exit(1);
+    } else
+        printf("socket 创建成功！\n");
 
-void cmd_2(char* data,char* send){
+    setnonblocking(listener);
 
-}
+    bzero(&my_addr, sizeof (my_addr));
+    my_addr.sin_family = AF_INET;
+    my_addr.sin_port = htons(myport);
+    my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
+    if (bind
+            (listener, (struct sockaddr *) &my_addr, sizeof (struct sockaddr))
+            == -1) {
+        perror("bind");
+        exit(1);
+    } else
+        printf("IP 地址和端口绑定成功\n");
 
-void write_cb(struct bufferevent *bev, void *arg) {}
+    if (listen(listener, lisnum) == -1) {
+        perror("listen");
+        exit(1);
+    } else
+        printf("开启服务成功！\n");
 
-void error_cb(struct bufferevent *bev, short event, void *arg)
-{
-    evutil_socket_t fd = bufferevent_getfd(bev);
-    printf("fd = %u, ", fd);
-    if (event & BEV_EVENT_TIMEOUT) {
-        printf("Timed out\n"); //if bufferevent_set_timeouts() called
+    /* 创建 epoll 句柄，把监听 socket 加入到 epoll 集合里 */
+    kdpfd = epoll_create(MAXEPOLLSIZE);
+    len = sizeof (struct sockaddr_in);
+    ev.events = EPOLLIN | EPOLLET;
+    ev.data.fd = listener;
+    if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, listener, &ev) < 0) {
+        fprintf(stderr, "epoll set insertion error: fd=%d\n", listener);
+        return -1;
+    } else
+        printf("监听 socket 加入 epoll 成功！\n");
+    curfds = 1;
+    while (1) {
+        /* 等待有事件发生 */
+        printf("while begin\n");
+        nfds = epoll_wait(kdpfd, events, curfds, -1);
+        printf("epoll wait:%d\n", nfds);
+        if (nfds == -1) {
+            perror("epoll_wait");
+            break;
+        }
+        
+        /* 处理所有事件 */
+        for (n = 0; n < nfds; ++n) {
+            if (events[n].data.fd == listener) {
+                new_fd = accept(listener, (struct sockaddr *) &their_addr,
+                        &len);
+                if (new_fd < 0) {
+                    perror("accept");
+                    continue;
+                } else{
+                    //printf("有连接来自于： %d:%d， 分配的 socket 为:%d\n", inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port), new_fd);
+
+                }
+
+                    
+                setnonblocking(new_fd);
+                ev.events = EPOLLIN | EPOLLET;
+                ev.data.fd = new_fd;
+                if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, new_fd, &ev) < 0) {
+                    fprintf(stderr, "把 socket '%d' 加入 epoll 失败！%s\n",
+                            new_fd, strerror(errno));
+                    return -1;
+                }
+                curfds++;
+            } else {
+                ret = handle_message(events[n].data.fd);
+                if (ret < 1 && errno != 11) {
+                    epoll_ctl(kdpfd, EPOLL_CTL_DEL, events[n].data.fd,
+                            &ev);
+                    curfds--;
+                }
+            }
+        }
     }
-    else if (event & BEV_EVENT_EOF) {
-        printf("connection closed\n");
-    }
-    else if (event & BEV_EVENT_ERROR) {
-        printf("some other error\n");
-    }
-    bufferevent_free(bev);
+    close(listener);
+    return 0;
 }

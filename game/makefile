@@ -1,11 +1,13 @@
-INC_LIBEVENT       = -I/usr/local/libevent/include -L/usr/local/libevent/lib
+INC_LIBEVENT       =  
 
 all: server client
 server:
-	g++ -g  $(INC_LIBEVENT) server.cpp -o server -levent
+	g++ -g server.cpp -o server 
 client:
-	g++ -g  $(INC_LIBEVENT) client.cpp -o client -levent
+	g++ -g client.cpp -o client 
 test:
 	g++ -g test.cpp -o test
+test2:
+	g++ -g test2.cpp -o test2
 clean:
-	rm -rf server client test
+	rm -rf server client test test2
