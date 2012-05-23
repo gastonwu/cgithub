@@ -1,4 +1,3 @@
-// Author: horacezhou
 // Class Name: Multi Level Hash
 //
 #ifndef __DNA_MULTI_HASH_H__
@@ -112,6 +111,7 @@ public:
 	inline int GetObjIdxByKey(ConstKeyType & key);
 	int InsertObj(const _DataItemType & obj);
 	int RemoveObjByKey(ConstKeyType & key);
+	
 
 public:
 	union {
