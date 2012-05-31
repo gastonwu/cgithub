@@ -1,13 +1,5 @@
 /*
-*文件名称: dna_sharemem.h
-*文件标识: 
-*摘    要: linux共享内存
-*
-*当前版本: 1.0
-*作者:     周健 HoraceZhou
-*邮箱:     firedna@gmail.com
-*完成日期: 2007-01-20
-*最后更新日期: 2007-01-28
+
 
 demo:
 
