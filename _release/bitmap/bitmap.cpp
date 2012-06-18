@@ -46,6 +46,7 @@ public:
     
 };
 
+/*
 int main() {
     
     BitMap bitmap;
@@ -56,3 +57,4 @@ int main() {
 
     return 1;
 }
+*/
