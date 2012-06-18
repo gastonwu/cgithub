@@ -22,9 +22,11 @@ class BitMap{
 		return $flag;
 	}
 }
+/**
 $bitmap = new BitMap();
 $bitmap->set(123);
 $flag1 = $bitmap->get(123);
 $flag2 = $bitmap->get(124);
 
 printf("flag1:%d,flag2:%d\n",$flag1,$flag2);;
+*/
