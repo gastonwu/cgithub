@@ -1,6 +1,6 @@
 <?php
 require_once "bitmap.php";
-ini_set ('memory_limit', '2048M');
+ini_set ('memory_limit', '1024M');
 
 $million = 1000000;
 $million10 = 100 * $million;

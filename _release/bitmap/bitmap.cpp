@@ -25,6 +25,10 @@ public:
         memset(bitmap,0,len/8+1);
     }
     
+    ~BitMap(){
+      delete bitmap;
+    }
+    
     int set(unsigned long num){
         int pos = num / 8;
         int charPos = num % 8;

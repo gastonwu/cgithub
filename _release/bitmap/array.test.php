@@ -1,5 +1,11 @@
 <?php
-ini_set ('memory_limit', '2048M');
+ini_set ('memory_limit', '1024M');
+
+$str = "";
+//$str[4] = "0";
+//echo $str."\n";
+//echo strlen($str)."\n";
+//exit;
 
 $million = 1000000;
 $million10 = 100 * $million;
