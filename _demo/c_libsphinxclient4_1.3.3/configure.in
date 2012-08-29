@@ -1,0 +1,72 @@
+#
+# C++ sphinx search client library
+# Copyright (C) 2007  Seznam.cz, a.s.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# Seznam.cz, a.s.
+# Radlicka 2, Praha 5, 15000, Czech Republic
+# http://www.seznam.cz, mailto:sphinxclient@firma.seznam.cz
+#
+#
+# $Id$
+#
+# DESCRIPTION
+# configure template Sphinx client
+#
+# AUTHORS
+# Jan Kirschner <jan.kirschner@firma.seznam.cz>
+#
+# HISTORY
+# 2006-12-04  (kirschner)
+#             Created.
+#
+
+
+# initialize autoconf
+AC_INIT(sphinxclient, 1.3.2, jan.kirschner@firma.seznam.cz)
+# initialize automake(use AC_INIT's arguments)
+AM_INIT_AUTOMAKE(-Wall foreign)
+
+AC_PREREQ(2.50)
+
+# tell autoconf where to find sources
+
+AC_CONFIG_SRCDIR([src/sphinxclient.cc])
+
+# check for C++ compiler
+AC_PROG_CXX
+
+# check for std C headers
+AC_HEADER_STDC
+
+# check for libtool
+AC_PROG_LIBTOOL
+
+# This version number needs to be changed in several different ways for each
+# release. Please read the libtool documentation (info libtool 'Updating
+# version info') before touching this. (this is *.so version number).
+VERSION_INFO="-version-info 4:0:0"
+AC_SUBST(VERSION_INFO)
+
+AC_CHECK_HEADERS([fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h unistd.h])
+AC_CHECK_HEADER(netdb.h, , AC_MSG_ERROR([netdb.h header missing], 1))
+AC_CHECK_HEADER(netinet/in.h, , AC_MSG_ERROR([in.h header missing], 1))
+AC_CHECK_HEADER(sys/socket.h, , AC_MSG_ERROR([socket.h header missing], 1))
+AC_CHECK_HEADER(stdlib.h, , AC_MSG_ERROR([Standart C header missing], 1))
+AC_CHECK_HEADER(unistd.h, , AC_MSG_ERROR([Standart unix header missing], 1))
+
+# generate Makefile
+AC_OUTPUT(version Makefile src/Makefile include/Makefile include/sphinxclient/Makefile)
