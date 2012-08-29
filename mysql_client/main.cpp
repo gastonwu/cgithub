@@ -50,7 +50,8 @@ MYSQL_ROW row;
 unsigned int num_fields;
 unsigned int i;
  
-  mysql_query(conn,"select * from testrt where match('aa') limit 1");
+  //mysql_query(conn,"insert into testrt(id,gid,title,content) values (1000,100,'cpp tomcat c insert title','cpp c insert content')");
+  mysql_query(conn,"select * from testrt where match('tomcat') limit 1");
   result = mysql_store_result(conn);
 
 
