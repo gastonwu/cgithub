@@ -13,6 +13,7 @@
 
 using namespace std; 
 
+
 #define BUFF_RESERVE_LENGTH 8
 struct QHead{
     int leftSize;//剩余空间
