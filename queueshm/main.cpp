@@ -107,7 +107,7 @@ public:
         }
         //剩余缓冲大小，小于包长度字节数，错误返回
         int leftSize = getLeftSize();
-        if(leftSize < size){
+        if(leftSize < size){//剩余空间不够一个item
             return -6;
         }
 
