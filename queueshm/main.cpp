@@ -107,6 +107,9 @@ public:
         }
         //剩余缓冲大小，小于包长度字节数，错误返回
         int leftSize = getLeftSize();
+        if(leftSize < size){
+            return -6;
+        }
 
         //数据首指针
         char *shmBuf = buf;
@@ -156,7 +159,7 @@ private:
         }
         //首 <  尾
         else{
-            retSize = qHead->leftSize - (head-tail);
+            retSize = qHead->leftSize - (tail - head);
         }
         retSize -= BUFF_RESERVE_LENGTH;
         return retSize;
@@ -168,10 +171,10 @@ private:
     }
     bool isFull(){
         if(getLeftSize() > 0 ){
-            printf("full < 1\n");
+            //printf("full < 1\n");
             return false;
         }else{
-            printf("full > 1\n");
+            //printf("full > 1\n");
             return true;
         }
     }
@@ -183,7 +186,7 @@ private:
 void shm_init(){
     int code = 0;
     QShm qshm;
-    qshm.init(12345,5000);
+    qshm.init(2000,5000);
     qshm.getBuf();
     QSQueue queue = QSQueue(qshm.getBuf());
     char item[100];
@@ -196,9 +199,13 @@ void shm_init(){
     memset(item2,0,sizeof(item2));
     memcpy(item2,"abc",sizeof("abc"));
     int size2 = sizeof(item2);
-    code = queue.putItem(item2,size2);
-    code = queue.putItem(item2,size2);
+    for(int i=0;i<49;i++){
+        code = queue.putItem(item2,size2);
+    }
     printf("item2:%s,code:%d\n",item2,code);
+    
+    code = queue.putItem(item2,size2);
+    
     
     char item3[100];
     memset(item3,0,sizeof(item3));
