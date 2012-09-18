@@ -199,7 +199,7 @@ void shm_init(){
     memset(item2,0,sizeof(item2));
     memcpy(item2,"abc",sizeof("abc"));
     int size2 = sizeof(item2);
-    for(int i=0;i<49;i++){
+    for(int i=0;i<490;i++){
         code = queue.putItem(item2,size2);
     }
     printf("item2:%s,code:%d\n",item2,code);
@@ -215,6 +215,7 @@ void shm_init(){
     printf("end.\n");
 
 }
+
 /*
  * 
  */
