@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     netdataQueue.pop(msg);
     netdataQueue.printStatus();
     for(int i=0;i<5;i++){
-        printf("(%c)\t",'-');netdataQueue.printStatus();
+//        printf("(%c)\t",'-');netdataQueue.printStatus();
         printf("[%d]\t",loop++);
         netdataQueue.push(msg);
         netdataQueue.printStatus();
